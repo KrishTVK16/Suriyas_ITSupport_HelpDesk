@@ -6,6 +6,7 @@ import AdminDashboard from './views/AdminDashboard';
 import LoginPage from './views/LoginPage';
 import RegisterPage from './views/RegisterPage';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 
 // Mock Data initialization
 const MOCK_USER: User = {
@@ -68,6 +69,7 @@ const App: React.FC = () => {
   const [landingSubView, setLandingSubView] = useState<LandingSubView>(() => (localStorage.getItem('helpdesk_sub_view') as LandingSubView) || 'home');
   const [landingStyle, setLandingStyle] = useState<LandingStyle>(() => (localStorage.getItem('helpdesk_landing_style') as LandingStyle) || 'corporate');
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('helpdesk_theme') as Theme) || 'light');
+  const [dashboardTab, setDashboardTab] = useState('dashboard');
 
   // Persistence Effects
   useEffect(() => { localStorage.setItem('helpdesk_user', JSON.stringify(currentUser)); }, [currentUser]);
@@ -152,35 +154,50 @@ const App: React.FC = () => {
         />;
       case 'dashboard':
         return (
-          <div className={`flex-1 flex flex-col ${isDarkUI ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
-            <Navbar
-              user={currentUser}
-              onLogout={logout}
-              theme={theme}
-              toggleTheme={toggleTheme}
-              onGoHome={() => setView('landing')}
-              onGoToLogin={() => setView('login')}
-              onGoToRegister={() => setView('register')}
-              onSignInUser={loginAsUser}
-              onSignInAdmin={loginAsAdmin}
-            />
-            <main className="container mx-auto px-4 py-8 flex-1">
-              {currentUser?.role === UserRole.USER ? (
-                <UserDashboard
-                  user={currentUser}
-                  tickets={tickets.filter(t => t.userId === currentUser.id)}
-                  onCreateTicket={addTicket}
-                  theme={theme}
-                />
-              ) : (
-                <AdminDashboard
-                  user={currentUser!}
-                  tickets={tickets}
-                  onUpdateStatus={updateTicketStatus}
-                  theme={theme}
-                />
-              )}
-            </main>
+          <div className={`flex h-screen overflow-hidden ${isDarkUI ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
+            <div className="hidden lg:block h-full">
+              <Sidebar
+                user={currentUser!}
+                theme={theme}
+                onLogout={logout}
+                activeTab={dashboardTab}
+                setActiveTab={setDashboardTab}
+              />
+            </div>
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Navbar
+                user={currentUser}
+                onLogout={logout}
+                theme={theme}
+                toggleTheme={toggleTheme}
+                onGoHome={() => setView('landing')}
+                onGoToLogin={() => setView('login')}
+                onGoToRegister={() => setView('register')}
+                onSignInUser={loginAsUser}
+                onSignInAdmin={loginAsAdmin}
+                activeTab={dashboardTab}
+                setActiveTab={setDashboardTab}
+              />
+              <main className="flex-1 overflow-y-auto p-4 md:p-8">
+                {currentUser?.role === UserRole.USER ? (
+                  <UserDashboard
+                    user={currentUser}
+                    tickets={tickets.filter(t => t.userId === currentUser.id)}
+                    onCreateTicket={addTicket}
+                    theme={theme}
+                    activeTab={dashboardTab}
+                  />
+                ) : (
+                  <AdminDashboard
+                    user={currentUser!}
+                    tickets={tickets}
+                    onUpdateStatus={updateTicketStatus}
+                    theme={theme}
+                    activeTab={dashboardTab}
+                  />
+                )}
+              </main>
+            </div>
           </div>
         );
       default:
@@ -219,47 +236,83 @@ const App: React.FC = () => {
       )}
 
       {(view === 'landing') && (
-        <footer className={`${isDarkUI ? 'bg-[#1e293b] border-[#334155] text-gray-400' : 'bg-white border-gray-200'} border-t py-12 mt-auto`}>
+        <footer className={`${isDarkUI ? 'bg-[#0f172a] border-t border-slate-800' : 'bg-gray-50 border-t border-gray-200'} py-16 mt-auto text-sm`}>
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-              <div className="space-y-4">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-y-12 lg:gap-y-16 lg:gap-x-8 mb-16">
+
+              {/* Brand Column - Top Row Left (Cols 1-4) */}
+              <div className="lg:col-span-4 space-y-6">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                     <i className="fas fa-headset text-sm"></i>
                   </div>
-                  <span className={`text-xl font-bold lowercase ${isDarkUI ? 'text-white' : 'text-gray-900'}`}>helpdesk pro</span>
+                  <span className={`text-xl font-bold tracking-tight lowercase ${isDarkUI ? 'text-white' : 'text-blue-900'}`}>helpdesk</span>
                 </div>
-                <p className="text-sm">fast it support you can trust. global solutions for ambitious companies. available 24/7/365.</p>
+                <p className={`leading-relaxed ${isDarkUI ? 'text-slate-400' : 'text-gray-500'}`}>
+                  Enterprise-grade IT support that scales with your ambition. Secure, reliable, and human-centric.
+                </p>
+
               </div>
-              <div>
-                <h4 className={`font-bold mb-4 lowercase ${isDarkUI ? 'text-white' : 'text-gray-900'}`}>support</h4>
-                <ul className="text-sm space-y-2 lowercase">
-                  <li><button onClick={() => { setLandingSubView('home'); scrollToTop(); }} className={`transition-colors ${landingSubView === 'home' ? 'text-red-600 font-bold' : 'text-gray-500 hover:text-blue-600'}`}>home</button></li>
-                  <li><button onClick={() => { setLandingSubView('services'); scrollToTop(); }} className={`transition-colors ${landingSubView === 'services' ? 'text-red-600 font-bold' : 'text-gray-500 hover:text-blue-600'}`}>Services</button></li>
-                  <li><button onClick={() => { setLandingSubView('about'); scrollToTop(); }} className={`transition-colors ${landingSubView === 'about' ? 'text-red-600 font-bold' : 'text-gray-500 hover:text-blue-600'}`}>About</button></li>
-                  <li><button onClick={() => { setLandingSubView('faq'); scrollToTop(); }} className={`transition-colors ${landingSubView === 'faq' ? 'text-red-600 font-bold' : 'text-gray-500 hover:text-blue-600'}`}>FAQ</button></li>
-                  <li><button onClick={() => { setLandingSubView('contact'); scrollToTop(); }} className={`transition-colors ${landingSubView === 'contact' ? 'text-red-600 font-bold' : 'text-gray-500 hover:text-blue-600'}`}>Contact Us</button></li>
+
+              {/* Platform Column - Top Row Middle (Cols 6-7) */}
+              <div className="lg:col-span-2 lg:col-start-6">
+                <h4 className={`font-bold mb-6 lowercase text-base ${isDarkUI ? 'text-white' : 'text-blue-900'}`}>Platform</h4>
+                <ul className={`space-y-4 ${isDarkUI ? 'text-slate-400' : 'text-gray-600'}`}>
+                  <li><button onClick={() => setLandingSubView('home')} className="hover:text-blue-500 transition-colors lowercase">Home</button></li>
+                  <li><button onClick={() => setLandingSubView('services')} className="hover:text-blue-500 transition-colors lowercase">Services</button></li>
+                  <li><button className="hover:text-blue-500 transition-colors lowercase">Pricing</button></li>
+                  <li><button className="hover:text-blue-500 transition-colors lowercase">Status</button></li>
                 </ul>
               </div>
-              <div>
-                <h4 className={`font-bold mb-4 lowercase ${isDarkUI ? 'text-white' : 'text-gray-900'}`}>company</h4>
-                <ul className="text-sm space-y-2 lowercase">
-                  <li><button onClick={() => { setLandingSubView('about'); scrollToTop(); }}>about us</button></li>
-                  <li><button onClick={() => { setLandingSubView('services'); scrollToTop(); }}>our services</button></li>
+
+              {/* Support Column - Top Row Right (Cols 8-9) */}
+              <div className="lg:col-span-2 lg:col-start-8">
+                <h4 className={`font-bold mb-6 lowercase text-base ${isDarkUI ? 'text-white' : 'text-blue-900'}`}>Support</h4>
+                <ul className={`space-y-4 ${isDarkUI ? 'text-slate-400' : 'text-gray-600'}`}>
+                  <li><button onClick={() => setLandingSubView('about')} className="hover:text-blue-500 transition-colors lowercase">About Us</button></li>
+                  <li><button onClick={() => setLandingSubView('contact')} className="hover:text-blue-500 transition-colors lowercase">Contact</button></li>
+                  <li><button onClick={() => setLandingSubView('faq')} className="hover:text-blue-500 transition-colors lowercase">FAQ</button></li>
+                  <li><button className="hover:text-blue-500 transition-colors lowercase">Legal</button></li>
                 </ul>
               </div>
-              <div>
-                <h4 className={`font-bold mb-4 lowercase ${isDarkUI ? 'text-white' : 'text-gray-900'}`}>follow us</h4>
-                <div className="flex space-x-5">
-                  <a href="#" className="hover:text-blue-500 transition-colors"><i className="fab fa-facebook text-xl"></i></a>
-                  <a href="#" className="hover:text-red-500 transition-colors"><i className="fab fa-youtube text-xl"></i></a>
-                  <a href="#" className="hover:text-blue-400 transition-colors"><i className="fab fa-twitter text-xl"></i></a>
-                  <a href="#" className="hover:text-blue-700 transition-colors"><i className="fab fa-linkedin text-xl"></i></a>
+
+              {/* Newsletter Column - Bottom Row Left (Cols 1-4) */}
+              <div className="lg:col-span-4 lg:row-start-2">
+                <h4 className={`font-bold mb-6 lowercase text-base ${isDarkUI ? 'text-white' : 'text-blue-900'}`}>Stay Updated</h4>
+                <p className={`mb-4 text-xs ${isDarkUI ? 'text-slate-400' : 'text-gray-500'}`}>Subscribe for the latest updates and security alerts.</p>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="email@company.com"
+                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 transition-all ${isDarkUI ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-200'}`}
+                  />
+                  <button className="bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+                    <i className="fas fa-paper-plane"></i>
+                  </button>
                 </div>
               </div>
+
+              {/* Follow Us Column - Top Row Right (Cols 10-11) */}
+              <div className="lg:col-span-2 lg:col-start-10">
+                <h4 className={`font-bold mb-6 lowercase text-base ${isDarkUI ? 'text-white' : 'text-blue-900'}`}>Follow Us</h4>
+                <div className="flex space-x-4">
+                  <a href="#" className={`text-xl transition-colors ${isDarkUI ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-blue-600'}`}><i className="fab fa-twitter"></i></a>
+                  <a href="#" className={`text-xl transition-colors ${isDarkUI ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-blue-600'}`}><i className="fab fa-github"></i></a>
+                  <a href="#" className={`text-xl transition-colors ${isDarkUI ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-blue-600'}`}><i className="fab fa-linkedin"></i></a>
+                  <a href="#" className={`text-xl transition-colors ${isDarkUI ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-blue-600'}`}><i className="fab fa-youtube"></i></a>
+                </div>
+              </div>
+
             </div>
-            <div className="border-t border-gray-100/10 pt-8 text-center text-xs lowercase">
-              &copy; {new Date().getFullYear()} helpdesk pro. all rights reserved. professional it support.
+
+            <div className={`border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs ${isDarkUI ? 'border-slate-800 text-slate-500' : 'border-gray-200 text-gray-400'}`}>
+              <p>&copy; {new Date().getFullYear()} helpdesk. all rights reserved.</p>
+              <div className="flex gap-6">
+                <button className="hover:text-blue-500 transition-colors">Privacy Policy</button>
+                <button className="hover:text-blue-500 transition-colors">Terms of Service</button>
+                <button className="hover:text-blue-500 transition-colors">Cookie Policy</button>
+              </div>
             </div>
           </div>
         </footer>
